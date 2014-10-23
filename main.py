@@ -6,7 +6,8 @@ from flask_bootstrap import Bootstrap
 
 import redis
 
-r = redis.StrictRedis(host='147.2.212.204', port=6379, db=0)
+r = redis.StrictRedis(host='147.2.212.204', port=6379, db=0,
+                      decode_responses=True)
 
 def create_app():
     app = Flask(__name__)
@@ -15,22 +16,11 @@ def create_app():
     Bootstrap(app)
 
     
-    class User:
-        def __init__(self, name, email, openid):
-            user_key = 'user/%s' & name
-            r.hmset(user_key,{'email':email, 'openid':openid})
-    
     @app.before_request
     def before_request():
         g.user = None
         if 'openid' in session:
-            g.user = r.hget(session['openid'],'user')
-    
-#    @app.after_request
-#    def after_request(response):
-#        db_session.remove()
-#        return response
-    
+            g.user = r.hgetall(session['openid'])
     
     @app.route('/')
     def index():
@@ -65,7 +55,6 @@ def create_app():
         with a terrible URL which we certainly don't want.
         """
         session['openid'] = resp.identity_url
-        print(session['openid'])
         if 'pape' in resp.extensions:
             pape_resp = resp.extensions['pape']
             session['auth_time'] = pape_resp.auth_time
@@ -108,11 +97,10 @@ def create_app():
         """Updates a profile"""
         if g.user is None:
             abort(401)
-        form = dict(name=g.user.name, email=g.user.email)
+        form = g.user
         if request.method == 'POST':
             if 'delete' in request.form:
-                db_session.delete(g.user)
-                db_session.commit()
+                r.delete(session['openid'])
                 session['openid'] = None
                 flash(u'Profile deleted')
                 return redirect(url_for('index'))
@@ -124,9 +112,8 @@ def create_app():
                 flash(u'Error: you have to enter a valid email address')
             else:
                 flash(u'Profile successfully created')
-                g.user.name = form['name']
-                g.user.email = form['email']
-                db_session.commit()
+                g.user['name'] = form['name']
+                g.user['email'] = form['email']
                 return redirect(url_for('edit_profile'))
         return render_template('edit_profile.html', form=form)
     
@@ -137,11 +124,6 @@ def create_app():
         flash(u'You have been signed out')
         return redirect(oid.get_next_url())
     
-    @app.route('/<name>')
-    def hello(name):
-        print(name)
-        return render_template('index.html', name=name)
-
     return app
 
 if __name__ == '__main__':
