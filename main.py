@@ -24,6 +24,8 @@ def create_app():
     
     @app.route('/')
     def index():
+        if g.user is None or 'openid' not in session:
+            return redirect(url_for('login'))
         return render_template('index.html')
     
     
