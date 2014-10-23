@@ -1,13 +1,16 @@
 {% extends "layout.html" %}
-{% block title %}Edit Profile{% endblock %}
-{% block body %}
+{% block content %}
+{{ super() }}
   <h2>Edit Profile</h2>
   <form action="" method=post>
     <dl>
       <dt>Name:
       <dd><input type=text name=name size=30 value="{{ form.name }}">
-      <dt>E-Mail
+      <dt>E-Mail:
       <dd><input type=text name=email size=30 value="{{ form.email }}">
+      <dt>Date Employed(e.g. 201209):
+      <dd><input type=text name=employtime size=30 value="{{
+            form.employtime }}">
     </dl>
     <p>
       <input type=submit value="Update profile">

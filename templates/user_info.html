@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block body %}
+    <h2>User Information</h2>
+    {% if g.user %}
+    <p>
+    Hello {{ g.user.name }}!
+    <p>
+    You have {{days}} annual leave!
+    {% endif %}
+{% endblock %}

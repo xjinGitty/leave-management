@@ -4,6 +4,8 @@ from flask.ext.openid import OpenID
 from openid.extensions import pape
 from flask_bootstrap import Bootstrap
 
+from datetime import datetime
+
 import redis
 
 r = redis.StrictRedis(host='147.2.212.204', port=6379, db=0,
@@ -13,7 +15,6 @@ def create_app():
     app = Flask(__name__)
     app.config.update(SECRET_KEY = 'developmentzxddddd', DEBUG=True)
     oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
-    Bootstrap(app)
 
     
     @app.before_request
@@ -35,7 +36,9 @@ def create_app():
         """
         # if we are already logged in, go back to were we came from
         if g.user is not None:
-            return redirect(oid.get_next_url())
+            print(oid.get_next_url())
+            #return redirect(oid.get_next_url())
+            return redirect(url_for('user_info'))
         if request.method == 'POST':
             openid = request.form.get('openid')
             if openid:
@@ -43,7 +46,7 @@ def create_app():
                 return oid.try_login(openid, ask_for=['email', 'nickname'],
                                              ask_for_optional=['fullname'],
                                              extensions=[pape_req])
-        return render_template('login.html', next=oid.get_next_url(),
+        return render_template('login.html', next='/user',
                                error=oid.fetch_error())
     
     
@@ -85,8 +88,6 @@ def create_app():
                 flash(u'Error: you have to enter a valid email address')
             else:
                 flash(u'Profile successfully created')
-                #db_session.add(User(name, email, session['openid']))
-                #db_session.commit()
                 r.hmset(session['openid'], {'name':name, 'email':email})
                 return redirect(oid.get_next_url())
         return render_template('create_profile.html', next_url=oid.get_next_url())
@@ -106,25 +107,41 @@ def create_app():
                 return redirect(url_for('index'))
             form['name'] = request.form['name']
             form['email'] = request.form['email']
+            form['employtime'] = request.form['employtime']
+            try:
+                employtime = datetime.strptime(form['employtime'], '%Y%m')
+            except ValueError:
+                employtime = None
             if not form['name']:
                 flash(u'Error: you have to provide a name')
             elif '@' not in form['email']:
                 flash(u'Error: you have to enter a valid email address')
+            elif not employtime:
+                flash(u'Error: you have to give a correct date')
             else:
                 flash(u'Profile successfully created')
-                g.user['name'] = form['name']
-                g.user['email'] = form['email']
+                for item in ['name', 'email', 'employtime']:
+                    g.user[item] = form[item]
+                    r.hset(session['openid'], item, form[item])
                 return redirect(url_for('edit_profile'))
         return render_template('edit_profile.html', form=form)
     
-    
+    @app.route('/user')
+    def user_info():
+        if g.user is None:
+            abort(401)
+        days = 15
+        return render_template('user_info.html', days=days)
+
     @app.route('/logout')
     def logout():
         session.pop('openid', None)
         flash(u'You have been signed out')
         return redirect(oid.get_next_url())
     
+    Bootstrap(app)
     return app
+
 
 if __name__ == '__main__':
     create_app().run(host='0.0.0.0')
