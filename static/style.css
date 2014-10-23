@@ -1,0 +1,12 @@
+.well {
+	opacity: 0.87;
+	margin-top: 90px;
+}
+
+.suseidimg{
+	width: 492px;
+    height: 108px;
+    border: 0px;
+	background-image: url(images/suse.png);
+	background-repeat: no-repeat;
+}

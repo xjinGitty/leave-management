@@ -1,13 +1,28 @@
 {% extends "layout.html" %}
+{% block styles %}
+{{super()}}
+<link rel="stylesheet" href="{{url_for('.static', filename='style.css')}}">
+{% endblock %}
 {% block title %}Sign in{% endblock %}
 {% block body %}
-  <h2>Sign in</h2>
-  <form action="" method=post>
-    {% if error %}<p class=error><strong>Error:</strong> {{ error }}</p>{% endif %}
-    <p>
-      OpenID:
-      <input type=text name=openid size=30>
-      <input type=submit value="Sign in">
-      <input type=hidden name=next value="{{ next }}">
-  </form>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-6 col-md-offset-3">
+      <div class="well bs-component">
+        <form class="form-horizontal" method=post action="">
+          <fieldset>
+            {% if error %}<p class=error><strong>Error:</strong> {{ error }}</p>{% endif %}
+            <div class="form-group">
+              <div class="text-center">
+              	<input type=hidden name=openid value="suse.com/openid/user">
+              	<input type=submit class="suseidimg" value="">
+              	<input type=hidden name=next value="{{ next }}">
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
